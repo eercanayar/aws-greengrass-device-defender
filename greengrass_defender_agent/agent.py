@@ -9,6 +9,7 @@ from greengrass_defender_agent import ipc_utils
 
 
 def set_configuration(configuration):
+    config.logger.debug("set_configuration() called.")
     """
     Set up a configuration object given input configuration and apply constraints and defaults.
 
@@ -45,7 +46,7 @@ def set_configuration(configuration):
     return new_config
 
 
-def set_configuration_and_publish(ipc_client, configuration, metrics_collector):
+def set_configuration_and_publish(ipc_client, configuration):
     """
     Call publish_metrics() with the new configuration object.
 
@@ -53,25 +54,39 @@ def set_configuration_and_publish(ipc_client, configuration, metrics_collector):
     :param configuration: a dictionary object of configuration
     :param metrics_collector: metrics collector
     """
+    
+    config.logger.debug(
+        "Set config EnableGPUMetrics: {}".format(
+            configuration["EnableGPUMetrics"]
+        )
+    )
+    # Initialize metrics collector
+    metrics_collector = collector.Collector(short_metrics_names=False, use_custom_metrics=configuration["EnableGPUMetrics"])
+    
     new_config = set_configuration(configuration)
     sample_interval_seconds = new_config[config.SAMPLE_INTERVAL_NEW_CONFIG_KEY]
-    config.logger.info("Collector running on device: {}".format(config.THING_NAME))
-    config.logger.info("Metrics topic: {}".format(config.TOPIC))
-    config.logger.info("Sampling interval: {} seconds".format(sample_interval_seconds))
+    config.logger.debug("Collector running on device: {}".format(config.THING_NAME))
+    config.logger.debug("Metrics topic: {}".format(config.TOPIC))
+    config.logger.debug("Sampling interval: {} seconds".format(sample_interval_seconds))
     publish_metrics(ipc_client, new_config, metrics_collector, sample_interval_seconds)
+    return metrics_collector
 
 
-def wait_for_config_changes(ipc_client, metrics_collector):
+def wait_for_config_changes(ipc_client):
     """
     Wait for configuration changes.
 
     :param ipc_client: Ipc client
     :param metrics_collector: metrics collector
     """
+    config.logger.debug("wait_for_config_changes() entered.")
     with config.condition:
+        config.logger.debug("Configuration wait started")
         config.condition.wait()
-        set_configuration_and_publish(ipc_client, ipc_client.get_configuration(), metrics_collector)
-    wait_for_config_changes(ipc_client, metrics_collector)
+        config.logger.debug("Configuration update received.")
+        set_configuration_and_publish(ipc_client, ipc_client.get_configuration())
+        config.logger.debug("set_configuration_and_publish() called after configuration update.")
+    wait_for_config_changes(ipc_client)
 
 
 def publish_metrics(ipc_client, config_changed, metrics_collector, sample_interval_seconds):
@@ -121,15 +136,13 @@ def main():
     ipc_client.subscribe_to_iot_core(config.TOPIC + "/accepted")
     ipc_client.subscribe_to_iot_core(config.TOPIC + "/rejected")
 
-    # Initialize metrics collector
-    metrics_collector = collector.Collector(short_metrics_names=False)
-
     # Start collecting and publishing metrics
-    set_configuration_and_publish(ipc_client, configuration, metrics_collector)
-
+    metrics_collector = set_configuration_and_publish(ipc_client, configuration)
+    config.logger.debug("metrics_collector returned")
     # Subscribe to the subsequent configuration changes
     ipc_client.subscribe_to_config_updates()
+    config.logger.debug("ipc_client subscribed to updates")
     Thread(
         target=wait_for_config_changes,
-        args=(ipc_client, metrics_collector),
+        args=(ipc_client, ),
     ).start()
