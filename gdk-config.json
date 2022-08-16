@@ -1,0 +1,16 @@
+{
+  "component": {
+    "com.awsiotblog.DeviceDefenderCustom": {
+      "author": "emirayar",
+      "version": "1.2.7",
+      "build": {
+        "build_system": "zip"
+      },
+      "publish": {
+        "bucket": "awsiotblog-ggv2",
+        "region": "us-east-1"
+      }
+    }
+  },
+  "gdk_version": "1.1.0"
+}

@@ -1,0 +1,68 @@
+{
+  "RecipeFormatVersion": "2020-01-25",
+  "ComponentName": "{COMPONENT_NAME}",
+  "ComponentVersion": "{COMPONENT_VERSION}",
+  "ComponentDescription": "The Device Defender component notifies administrators about changes in the state of Greengrass core devices. This can help identify unusual behavior that might indicate a compromised device.",
+  "ComponentPublisher": "{COMPONENT_AUTHOR}",
+  "ComponentConfiguration": {
+    "DefaultConfiguration": {
+      "accessControl": {
+        "aws.greengrass.ipc.mqttproxy": {
+          "{COMPONENT_NAME}:mqttproxy:1": {
+            "policyDescription": "Access to publish",
+            "operations": [
+              "aws.greengrass#PublishToIoTCore"
+            ],
+            "resources": [
+              "$aws/things/+/defender/metrics/json"
+            ]
+          },
+          "{COMPONENT_NAME}:mqttproxy:2": {
+            "policyDescription": "Access to subscribe",
+            "operations": [
+              "aws.greengrass#SubscribeToIoTCore"
+            ],
+            "resources": [
+              "$aws/things/+/defender/metrics/json/accepted",
+              "$aws/things/+/defender/metrics/json/rejected"
+            ]
+          }
+        }
+      },
+      "SampleIntervalSeconds": "300",
+      "UseInstaller": "true",
+      "EnableGPUMetrics": false
+    }
+  },
+  "ComponentDependencies": {
+    "aws.greengrass.Nucleus": {
+      "VersionRequirement": ">=2.0.0 <3.0.0",
+      "DependencyType": "SOFT"
+    }
+  },
+  "Manifests": [
+    {
+      "Platform": {
+        "os": "/darwin|linux/",
+        "architecture": "*"
+      },
+      "Lifecycle": {
+        "install": {
+          "requiresPrivilege": "true",
+          "script": "if {configuration:/UseInstaller} ; then pip3 install -r  {artifacts:decompressedPath}/com.awsiotblog.DeviceDefenderCustom/requirements.txt --user && python3 -u {artifacts:decompressedPath}/com.awsiotblog.DeviceDefenderCustom/installer.py ; fi"
+        },
+        "run": {
+          "requiresPrivilege": "true",
+          "script": "python3 -u {artifacts:decompressedPath}/com.awsiotblog.DeviceDefenderCustom/run_agent.py"
+        }
+      },
+      "Artifacts": [
+        {
+          "URI": "s3://awsiotblog-ggv2/{COMPONENT_NAME}/{COMPONENT_VERSION}/com.awsiotblog.DeviceDefenderCustom.zip",
+          "Unarchive": "ZIP"
+        }
+      ]
+    }
+  ],
+  "Lifecycle": {}
+}
