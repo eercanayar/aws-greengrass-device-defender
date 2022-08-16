@@ -24,5 +24,5 @@ condition = Condition()
 # Get a logger
 logger = logging.getLogger()
 handler = logging.StreamHandler(sys.stdout)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
