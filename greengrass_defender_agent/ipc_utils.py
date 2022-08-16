@@ -113,7 +113,7 @@ class IPCUtils:
         "SampleIntervalSeconds".
         """
         try:
-            subsreq = SubscribeToConfigurationUpdateRequest(key_path=[config.SAMPLE_INTERVAL_CONFIG_KEY])
+            subsreq = SubscribeToConfigurationUpdateRequest(key_path=[])
             subscribe_operation = self.ipc_client.new_subscribe_to_configuration_update(
                 ConfigUpdateHandler()
             )
