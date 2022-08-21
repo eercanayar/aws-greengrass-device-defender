@@ -1,1 +1,0 @@
-git+https://github.com/eercanayar/aws-iot-device-defender-agent-sdk-python.git@awsiotblog-gpu-metrics
